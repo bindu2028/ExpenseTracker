@@ -1,0 +1,352 @@
+{% extends "base.html" %}
+
+{% block title %}Analysis - 💰 Expense Tracker{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- Header -->
+    <div class="page-header">
+        <h1 class="page-title">📊 Expense Analysis</h1>
+        <p class="page-subtitle">Analyze your spending patterns and insights</p>
+    </div>
+
+    {% if categories %}
+    <!-- Charts Grid -->
+    <div class="charts-grid">
+        <!-- Pie Chart - Category Breakdown -->
+        <div class="chart-card">
+            <h3 class="chart-title">🏷️ Spending by Category</h3>
+            <div class="chart-wrapper">
+                <canvas id="categoryPie"></canvas>
+            </div>
+        </div>
+
+        <!-- Bar Chart - Monthly Breakdown -->
+        <div class="chart-card">
+            <h3 class="chart-title">📅 Monthly Spending</h3>
+            <div class="chart-wrapper">
+                <canvas id="monthlyBar"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Line Chart - Full Width -->
+    <div class="chart-card chart-full">
+        <h3 class="chart-title">📈 Spending Trend</h3>
+        <div class="chart-wrapper-wide">
+            <canvas id="trendLine"></canvas>
+        </div>
+    </div>
+
+    {% else %}
+    <!-- Empty State -->
+    <div class="empty-state-card">
+        <div class="empty-icon">📊</div>
+        <h3>No Data Yet</h3>
+        <p>Add some expenses to see your spending analysis</p>
+        <a href="{{ url_for('add_expense') }}" class="add-btn">➕ Add Expense</a>
+    </div>
+    {% endif %}
+
+    <!-- Smart Suggestions -->
+    {% if suggestions %}
+    <div class="suggestions-card">
+        <h3 class="suggestions-title">💡 Smart Financial Suggestions</h3>
+        <div class="suggestions-list">
+            {% for suggestion in suggestions %}
+            <div class="suggestion-item">
+                <span class="suggestion-icon">🎯</span>
+                <p>{{ suggestion }}</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<style>
+.page-header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.page-title {
+    font-size: 2.2rem;
+    font-weight: 700;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 8px;
+}
+
+.page-subtitle {
+    color: #6b7280;
+    font-size: 1.1rem;
+}
+
+.charts-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    gap: 24px;
+    margin-bottom: 24px;
+}
+
+.chart-card {
+    background: white;
+    border-radius: 16px;
+    padding: 24px;
+    box-shadow: 0 4px 20px rgba(102, 126, 234, 0.1);
+    border: 1px solid rgba(102, 126, 234, 0.08);
+}
+
+.chart-full {
+    margin-bottom: 24px;
+}
+
+.chart-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.chart-wrapper {
+    position: relative;
+    height: 280px;
+}
+
+.chart-wrapper-wide {
+    position: relative;
+    height: 250px;
+}
+
+.empty-state-card {
+    background: white;
+    border-radius: 16px;
+    padding: 60px 40px;
+    text-align: center;
+    box-shadow: 0 4px 20px rgba(102, 126, 234, 0.1);
+}
+
+.empty-icon {
+    font-size: 4rem;
+    margin-bottom: 16px;
+}
+
+.empty-state-card h3 {
+    font-size: 1.5rem;
+    color: #374151;
+    margin-bottom: 8px;
+}
+
+.empty-state-card p {
+    color: #6b7280;
+    margin-bottom: 24px;
+}
+
+.add-btn {
+    display: inline-block;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 12px 24px;
+    border-radius: 10px;
+    text-decoration: none;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.add-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+}
+
+.suggestions-card {
+    background: linear-gradient(135deg, #f0f4ff 0%, #fdf4ff 100%);
+    border-radius: 16px;
+    padding: 24px;
+    border: 1px solid rgba(102, 126, 234, 0.1);
+}
+
+.suggestions-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 16px;
+}
+
+.suggestions-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.suggestion-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    background: white;
+    padding: 16px;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.suggestion-icon {
+    font-size: 1.3rem;
+    flex-shrink: 0;
+}
+
+.suggestion-item p {
+    margin: 0;
+    color: #4b5563;
+    line-height: 1.5;
+}
+
+@media (max-width: 768px) {
+    .charts-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .page-title {
+        font-size: 1.8rem;
+    }
+}
+</style>
+
+{% if categories %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Data from Flask
+    const categories = {{ categories|tojson|safe }};
+    const categoryAmounts = {{ category_amounts|tojson|safe }};
+    const months = {{ months|tojson|safe }};
+    const monthlyAmounts = {{ monthly_amounts|tojson|safe }};
+    const trendDates = {{ trend_dates|tojson|safe }};
+    const trendAmounts = {{ trend_amounts|tojson|safe }};
+    
+    const categoryColors = [
+        '#667eea', '#764ba2', '#f093fb', '#f5576c', 
+        '#4facfe', '#43e97b', '#fa709a', '#fee140'
+    ];
+
+    // Pie Chart - Category Breakdown
+    const pieCtx = document.getElementById('categoryPie').getContext('2d');
+    new Chart(pieCtx, {
+        type: 'doughnut',
+        data: {
+            labels: categories,
+            datasets: [{
+                data: categoryAmounts,
+                backgroundColor: categoryColors.slice(0, categories.length),
+                borderWidth: 3,
+                borderColor: '#fff',
+                hoverOffset: 8
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        padding: 20,
+                        usePointStyle: true,
+                        font: { size: 12, weight: '500' }
+                    }
+                }
+            },
+            cutout: '60%'
+        }
+    });
+
+    // Bar Chart - Monthly Breakdown
+    const barCtx = document.getElementById('monthlyBar').getContext('2d');
+    new Chart(barCtx, {
+        type: 'bar',
+        data: {
+            labels: months,
+            datasets: [{
+                label: 'Amount (₹)',
+                data: monthlyAmounts,
+                backgroundColor: 'rgba(102, 126, 234, 0.8)',
+                borderColor: '#667eea',
+                borderWidth: 2,
+                borderRadius: 8,
+                borderSkipped: false
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    grid: { color: 'rgba(0,0,0,0.05)' },
+                    ticks: { 
+                        callback: function(value) { return '₹' + value; }
+                    }
+                },
+                x: {
+                    grid: { display: false }
+                }
+            }
+        }
+    });
+
+    // Line Chart - Spending Trend
+    const lineCtx = document.getElementById('trendLine').getContext('2d');
+    new Chart(lineCtx, {
+        type: 'line',
+        data: {
+            labels: trendDates,
+            datasets: [{
+                label: 'Daily Spending (₹)',
+                data: trendAmounts,
+                borderColor: '#764ba2',
+                backgroundColor: 'rgba(118, 75, 162, 0.1)',
+                borderWidth: 3,
+                fill: true,
+                tension: 0.4,
+                pointRadius: 6,
+                pointBackgroundColor: '#667eea',
+                pointBorderColor: '#fff',
+                pointBorderWidth: 2,
+                pointHoverRadius: 8
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    grid: { color: 'rgba(0,0,0,0.05)' },
+                    ticks: {
+                        callback: function(value) { return '₹' + value; }
+                    }
+                },
+                x: {
+                    grid: { display: false }
+                }
+            },
+            interaction: {
+                intersect: false,
+                mode: 'index'
+            }
+        }
+    });
+});
+</script>
+{% endif %}
+{% endblock %}
+

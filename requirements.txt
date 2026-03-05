@@ -1,0 +1,9 @@
+# Personal Expense Tracker - Requirements
+# Python dependencies
+
+Flask==2.3.3
+Werkzeug==2.3.7
+pandas==2.0.3
+gunicorn==21.2.0
+
+

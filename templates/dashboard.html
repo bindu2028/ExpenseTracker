@@ -1,0 +1,131 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Expense Tracker{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- Welcome Section -->
+    <div class="welcome-section">
+        <h1 class="welcome-title">Welcome back, <span class="user-name">{{ username }}</span>! 👋</h1>
+        <p class="welcome-subtitle">Here's your spending overview</p>
+    </div>
+
+    <!-- Metrics Grid -->
+    <div class="metrics-grid">
+        <!-- Total Expenses Card -->
+        <div class="metric-card metric-card-1">
+            <div class="metric-icon">💼</div>
+            <div class="metric-content">
+                <p class="metric-label">Total Expenses</p>
+                <p class="metric-value">₹{{ "%.2f"|format(total_expenses) }}</p>
+            </div>
+            <div class="metric-gradient"></div>
+        </div>
+
+        <!-- Today's Spending Card -->
+        <div class="metric-card metric-card-2">
+            <div class="metric-icon">📅</div>
+            <div class="metric-content">
+                <p class="metric-label">Today's Spending</p>
+                <p class="metric-value">₹{{ "%.2f"|format(todays_spending) }}</p>
+            </div>
+            <div class="metric-gradient"></div>
+        </div>
+
+        <!-- Monthly Spending Card -->
+        <div class="metric-card metric-card-3">
+            <div class="metric-icon">📊</div>
+            <div class="metric-content">
+                <p class="metric-label">Monthly Spending</p>
+                <p class="metric-value">₹{{ "%.2f"|format(monthly_spending) }}</p>
+            </div>
+            <div class="metric-gradient"></div>
+        </div>
+
+        <!-- Transactions Card -->
+        <div class="metric-card metric-card-4">
+            <div class="metric-icon">💸</div>
+            <div class="metric-content">
+                <p class="metric-label">Transactions</p>
+                <p class="metric-value">{{ transaction_count }}</p>
+            </div>
+            <div class="metric-gradient"></div>
+        </div>
+    </div>
+
+    <!-- Content Section -->
+    <div class="dashboard-content-grid">
+        <!-- Recent Transactions -->
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title">Recent Transactions</h2>
+                <a href="{{ url_for('view_expenses') }}" class="view-all-link">View All →</a>
+            </div>
+            
+            {% if recent_expenses %}
+                <div class="transaction-table">
+                    <div class="table-header">
+                        <div class="table-cell">Date</div>
+                        <div class="table-cell">Category</div>
+                        <div class="table-cell">Amount</div>
+                        <div class="table-cell">Description</div>
+                    </div>
+                    
+                    {% for transaction in recent_expenses %}
+                    <div class="table-row">
+                        <div class="table-cell">
+                            <span class="date-badge">{{ transaction[0] }}</span>
+                        </div>
+                        <div class="table-cell">
+                            <span class="category-badge category-{{ transaction[1]|lower }}">
+                                {{ transaction[1] }}
+                            </span>
+                        </div>
+                        <div class="table-cell">
+                            <span class="amount-text">₹{{ "{:,.2f}".format(transaction[2]) }}</span>
+                        </div>
+                        <div class="table-cell">
+                            <span class="description-text">{{ transaction[3] if transaction[3] else '-' }}</span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p class="empty-state">No transactions yet. <a href="{{ url_for('add_expense') }}">Add one now →</a></p>
+            {% endif %}
+        </div>
+
+        <!-- Spending Insights -->
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title">Spending Insights</h2>
+            </div>
+            
+            <div class="insights-container">
+                {% if insights %}
+                    {% for insight in insights %}
+                    <div class="insight-item">
+                        <div class="insight-icon">📈</div>
+                        <p class="insight-text">{{ insight }}</p>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <p class="empty-state">Add expenses to see insights</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="quick-actions">
+        <a href="{{ url_for('add_expense') }}" class="action-button">
+            <span class="action-icon">➕</span>
+            <span>Add New Expense</span>
+        </a>
+        <a href="{{ url_for('analysis') }}" class="action-button">
+            <span class="action-icon">📊</span>
+            <span>View Analytics</span>
+        </a>
+    </div>
+</div>
+{% endblock %}

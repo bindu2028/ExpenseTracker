@@ -1,0 +1,154 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - 💰 Expense Tracker{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- Header -->
+    <div class="header">
+        <h1>💰 Dashboard</h1>
+        <p>Welcome! Here's an overview of your expenses</p>
+    </div>
+
+    <!-- Key Metrics -->
+    <div class="metrics-grid">
+        <div class="metric-card">
+            <div class="metric-icon">💵</div>
+            <div class="metric-content">
+                <h3>Total Spending</h3>
+                <p class="metric-value">₹{{ total_spending }}</p>
+            </div>
+        </div>
+        <div class="metric-card">
+            <div class="metric-icon">📊</div>
+            <div class="metric-content">
+                <h3>Transactions</h3>
+                <p class="metric-value">{{ expense_count }}</p>
+            </div>
+        </div>
+        <div class="metric-card">
+            <div class="metric-icon">📈</div>
+            <div class="metric-content">
+                <h3>Average</h3>
+                <p class="metric-value">₹{{ avg_spending }}</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Section -->
+    <div class="charts-section">
+        <div class="chart-container">
+            <h3>📊 Spending by Category</h3>
+            <canvas id="pieChart"></canvas>
+        </div>
+        <div class="chart-container">
+            <h3>💰 Category Breakdown</h3>
+            <canvas id="barChart"></canvas>
+        </div>
+    </div>
+
+    <!-- Recent Expenses -->
+    <div class="section">
+        <h2>📋 Recent Expenses</h2>
+        <div id="recentExpenses" class="expense-table">
+            <p>Loading...</p>
+        </div>
+    </div>
+</div>
+
+<script>
+    const categoriesData = {{ categories|safe }};
+    
+    // Load dashboard stats
+    async function loadDashboard() {
+        try {
+            const response = await axios.get('/api/dashboard-stats');
+            if (response.data.success) {
+                // Update recent expenses
+                const table = document.getElementById('recentExpenses');
+                if (response.data.recent_expenses.length > 0) {
+                    let html = '<table class="table"><thead><tr><th>Date</th><th>Category</th><th>Amount</th><th>Description</th></tr></thead><tbody>';
+                    response.data.recent_expenses.forEach(exp => {
+                        html += `<tr><td>${exp.date}</td><td><span class="category-badge category-${exp.category.toLowerCase()}">${exp.category}</span></td><td>₹${parseFloat(exp.amount).toFixed(2)}</td><td>${exp.description || '-'}</td></tr>`;
+                    });
+                    html += '</tbody></table>';
+                    table.innerHTML = html;
+                } else {
+                    table.innerHTML = '<p class="text-center">No expenses recorded yet</p>';
+                }
+            }
+        } catch (error) {
+            console.error('Error loading dashboard:', error);
+        }
+    }
+
+    // Initialize charts
+    function initCharts() {
+        const categories = Object.keys(categoriesData);
+        const amounts = Object.values(categoriesData);
+        const colors = {
+            'Food': '#FF6B6B',
+            'Travel': '#4ECDC4',
+            'Shopping': '#FFE66D',
+            'Bills': '#95E1D3',
+            'Other': '#C7CEEA'
+        };
+
+        // Pie Chart
+        const pieCtx = document.getElementById('pieChart').getContext('2d');
+        new Chart(pieCtx, {
+            type: 'doughnut',
+            data: {
+                labels: categories,
+                datasets: [{
+                    data: amounts,
+                    backgroundColor: categories.map(c => colors[c] || '#C7CEEA'),
+                    borderColor: '#fff',
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: { padding: 20, font: { size: 14 } }
+                    }
+                }
+            }
+        });
+
+        // Bar Chart
+        const barCtx = document.getElementById('barChart').getContext('2d');
+        new Chart(barCtx, {
+            type: 'bar',
+            data: {
+                labels: categories,
+                datasets: [{
+                    label: 'Amount (₹)',
+                    data: amounts,
+                    backgroundColor: categories.map(c => colors[c] || '#C7CEEA'),
+                    borderRadius: 8,
+                    borderSkipped: false
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                plugins: {
+                    legend: { display: false }
+                },
+                scales: {
+                    x: { beginAtZero: true }
+                }
+            }
+        });
+    }
+
+    // Initialize on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        initCharts();
+        loadDashboard();
+    });
+</script>
+{% endblock %}

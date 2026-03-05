@@ -1,0 +1,358 @@
+{% extends "base.html" %}
+
+{% block title %}Add Expense - 💰 Expense Tracker{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- Header -->
+    <div class="page-header">
+        <h1 class="page-title">➕ Add New Expense</h1>
+        <p class="page-subtitle">Record a new expense to track your spending</p>
+    </div>
+
+    {% if success %}
+    <div class="success-notification">
+        <span class="success-icon">✅</span>
+        <span>Expense added successfully!</span>
+    </div>
+    {% endif %}
+
+    <!-- Modern Form Card -->
+    <div class="form-card">
+        <form action="{{ url_for('add_expense') }}" method="POST" class="expense-form">
+            
+            <!-- Date Field -->
+            <div class="form-field">
+                <label class="field-label">
+                    <span class="label-icon">📅</span>
+                    Date
+                </label>
+                <input type="date" name="date" class="field-input" required>
+            </div>
+
+            <!-- Category Field -->
+            <div class="form-field">
+                <label class="field-label">
+                    <span class="label-icon">🏷️</span>
+                    Category
+                </label>
+                <div class="select-wrapper">
+                    <select name="category" class="field-input field-select" required>
+                        <option value="" disabled selected>Choose a category</option>
+                        <option value="Food">🍔 Food & Dining</option>
+                        <option value="Travel">✈️ Travel & Transport</option>
+                        <option value="Shopping">🛍️ Shopping</option>
+                        <option value="Bills">📄 Bills & Utilities</option>
+                        <option value="Entertainment">🎬 Entertainment</option>
+                        <option value="Other">📦 Other</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Amount Field -->
+            <div class="form-field">
+                <label class="field-label">
+                    <span class="label-icon">💰</span>
+                    Amount
+                </label>
+                <div class="amount-input-wrapper">
+                    <span class="currency-symbol">₹</span>
+                    <input type="number" name="amount" class="field-input amount-input" 
+                           step="0.01" min="0.01" required placeholder="0.00">
+                </div>
+            </div>
+
+            <!-- Description Field -->
+            <div class="form-field">
+                <label class="field-label">
+                    <span class="label-icon">📝</span>
+                    Description
+                    <span class="optional-badge">Optional</span>
+                </label>
+                <textarea name="description" class="field-input field-textarea" 
+                          rows="3" placeholder="What was this expense for?"></textarea>
+            </div>
+
+            <!-- Submit Button -->
+            <button type="submit" class="submit-btn">
+                <span class="btn-icon">✨</span>
+                Add Expense
+            </button>
+        </form>
+    </div>
+
+    <!-- Tips Section -->
+    <div class="tips-card">
+        <h3 class="tips-title">💡 Quick Tips</h3>
+        <div class="tips-grid">
+            <div class="tip-item">
+                <span class="tip-icon">📊</span>
+                <div class="tip-content">
+                    <strong>Be Consistent</strong>
+                    <p>Track daily for accurate insights</p>
+                </div>
+            </div>
+            <div class="tip-item">
+                <span class="tip-icon">🏷️</span>
+                <div class="tip-content">
+                    <strong>Categorize Well</strong>
+                    <p>Better analysis with right categories</p>
+                </div>
+            </div>
+            <div class="tip-item">
+                <span class="tip-icon">📝</span>
+                <div class="tip-content">
+                    <strong>Add Notes</strong>
+                    <p>Remember expense context later</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Set today's date as default
+    document.querySelector('input[name="date"]').valueAsDate = new Date();
+</script>
+
+<style>
+/* Form Card Styles */
+.page-header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.page-title {
+    font-size: 2.2rem;
+    font-weight: 700;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 8px;
+}
+
+.page-subtitle {
+    color: #6b7280;
+    font-size: 1.1rem;
+}
+
+.success-notification {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white;
+    padding: 16px 24px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 24px;
+    font-weight: 500;
+    box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+    animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.form-card {
+    background: white;
+    border-radius: 20px;
+    padding: 40px;
+    box-shadow: 0 10px 40px rgba(102, 126, 234, 0.1);
+    border: 1px solid rgba(102, 126, 234, 0.1);
+    margin-bottom: 30px;
+}
+
+.expense-form {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.form-field {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.field-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+    color: #374151;
+    font-size: 0.95rem;
+}
+
+.label-icon {
+    font-size: 1.1rem;
+}
+
+.optional-badge {
+    background: #e5e7eb;
+    color: #6b7280;
+    font-size: 0.75rem;
+    padding: 2px 8px;
+    border-radius: 20px;
+    font-weight: 500;
+    margin-left: auto;
+}
+
+.field-input {
+    padding: 14px 18px;
+    border: 2px solid #e5e7eb;
+    border-radius: 12px;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    background: #f9fafb;
+    color: #1f2937;
+}
+
+.field-input:focus {
+    outline: none;
+    border-color: #667eea;
+    background: white;
+    box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+}
+
+.field-input::placeholder {
+    color: #9ca3af;
+}
+
+.select-wrapper {
+    position: relative;
+}
+
+.field-select {
+    appearance: none;
+    cursor: pointer;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%236b7280'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 14px center;
+    background-size: 20px;
+    padding-right: 45px;
+}
+
+.amount-input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.currency-symbol {
+    position: absolute;
+    left: 18px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #667eea;
+}
+
+.amount-input {
+    padding-left: 40px;
+    font-weight: 600;
+    font-size: 1.2rem;
+}
+
+.field-textarea {
+    resize: vertical;
+    min-height: 80px;
+}
+
+.submit-btn {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    padding: 16px 32px;
+    border-radius: 12px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    transition: all 0.3s ease;
+    margin-top: 10px;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+}
+
+.submit-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 25px rgba(102, 126, 234, 0.4);
+}
+
+.submit-btn:active {
+    transform: translateY(0);
+}
+
+.btn-icon {
+    font-size: 1.2rem;
+}
+
+/* Tips Card */
+.tips-card {
+    background: linear-gradient(135deg, #f0f4ff 0%, #fdf4ff 100%);
+    border-radius: 16px;
+    padding: 24px;
+    border: 1px solid rgba(102, 126, 234, 0.1);
+}
+
+.tips-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 16px;
+}
+
+.tips-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+}
+
+.tip-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    background: white;
+    padding: 16px;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.tip-icon {
+    font-size: 1.5rem;
+    flex-shrink: 0;
+}
+
+.tip-content strong {
+    display: block;
+    color: #374151;
+    margin-bottom: 4px;
+    font-size: 0.95rem;
+}
+
+.tip-content p {
+    color: #6b7280;
+    font-size: 0.85rem;
+    margin: 0;
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+    .form-card {
+        padding: 24px;
+    }
+    
+    .page-title {
+        font-size: 1.8rem;
+    }
+    
+    .tips-grid {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+{% endblock %}
