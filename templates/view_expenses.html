@@ -28,6 +28,79 @@
         </div>
     </div>
 
+    <!-- Search and Filter Section -->
+    <div class="filter-card">
+        <form method="GET" action="{{ url_for('view_expenses') }}" class="filter-form">
+            <div class="search-bar">
+                <span class="search-icon">🔍</span>
+                <input type="text" name="search" class="search-input" 
+                       placeholder="Search expenses..." value="{{ search or '' }}">
+            </div>
+            
+            <div class="filter-row">
+                <div class="filter-group">
+                    <label>Category</label>
+                    <select name="category" class="filter-select">
+                        <option value="">All Categories</option>
+                        <option value="Food" {% if filter_category == 'Food' %}selected{% endif %}>🍔 Food</option>
+                        <option value="Travel" {% if filter_category == 'Travel' %}selected{% endif %}>✈️ Travel</option>
+                        <option value="Shopping" {% if filter_category == 'Shopping' %}selected{% endif %}>🛍️ Shopping</option>
+                        <option value="Bills" {% if filter_category == 'Bills' %}selected{% endif %}>📄 Bills</option>
+                        <option value="Entertainment" {% if filter_category == 'Entertainment' %}selected{% endif %}>🎬 Entertainment</option>
+                        <option value="Healthcare" {% if filter_category == 'Healthcare' %}selected{% endif %}>🏥 Healthcare</option>
+                        <option value="Education" {% if filter_category == 'Education' %}selected{% endif %}>📚 Education</option>
+                        <option value="Other" {% if filter_category == 'Other' %}selected{% endif %}>📦 Other</option>
+                    </select>
+                </div>
+                
+                <div class="filter-group">
+                    <label>From Date</label>
+                    <input type="date" name="start_date" class="filter-input" value="{{ start_date or '' }}">
+                </div>
+                
+                <div class="filter-group">
+                    <label>To Date</label>
+                    <input type="date" name="end_date" class="filter-input" value="{{ end_date or '' }}">
+                </div>
+                
+                <div class="filter-group">
+                    <label>Min Amount</label>
+                    <input type="number" name="min_amount" class="filter-input" 
+                           placeholder="₹0" value="{{ min_amount or '' }}">
+                </div>
+                
+                <div class="filter-group">
+                    <label>Max Amount</label>
+                    <input type="number" name="max_amount" class="filter-input" 
+                           placeholder="₹10000" value="{{ max_amount or '' }}">
+                </div>
+                
+                <div class="filter-group">
+                    <label>Tags</label>
+                    <input type="text" name="tags" class="filter-input" 
+                           placeholder="e.g., work" value="{{ filter_tags or '' }}">
+                </div>
+            </div>
+            
+            <div class="filter-actions">
+                <button type="submit" class="filter-btn apply-btn">
+                    🔍 Apply Filters
+                </button>
+                <a href="{{ url_for('view_expenses') }}" class="filter-btn clear-btn">
+                    ✖️ Clear All
+                </a>
+                <div class="export-btns">
+                    <a href="{{ url_for('export_csv') }}" class="filter-btn export-btn">
+                        📄 Export CSV
+                    </a>
+                    <a href="{{ url_for('export_pdf') }}" target="_blank" class="filter-btn export-btn">
+                        📑 Export PDF
+                    </a>
+                </div>
+            </div>
+        </form>
+    </div>
+
     <!-- Expenses Table -->
     <div class="card">
         <div class="card-header">
@@ -40,6 +113,8 @@
                     <div class="table-cell">Category</div>
                     <div class="table-cell">Amount</div>
                     <div class="table-cell">Description</div>
+                    <div class="table-cell">Tags</div>
+                    <div class="table-cell">Receipt</div>
                     <div class="table-cell">Action</div>
                 </div>
                 {% for expense in expenses %}
@@ -55,6 +130,27 @@
                     </div>
                     <div class="table-cell">
                         <span class="description-text">{{ expense.description if expense.description else '-' }}</span>
+                        {% if expense.notes %}
+                        <small class="notes-text">📋 {{ expense.notes[:30] }}...</small>
+                        {% endif %}
+                    </div>
+                    <div class="table-cell">
+                        {% if expense.tags %}
+                        <div class="tags-container">
+                            {% for tag in expense.tags.split(',') %}
+                            <span class="tag">{{ tag.strip() }}</span>
+                            {% endfor %}
+                        </div>
+                        {% else %}
+                        -
+                        {% endif %}
+                    </div>
+                    <div class="table-cell">
+                        {% if expense.receipt_path %}
+                        <a href="{{ url_for('view_receipt', expense_id=expense.id) }}" target="_blank" class="receipt-link">📎 View</a>
+                        {% else %}
+                        -
+                        {% endif %}
                     </div>
                     <div class="table-cell">
                         <button class="delete-btn" onclick="deleteExpense({{ expense.id }})" title="Delete expense">
@@ -65,7 +161,7 @@
                 {% endfor %}
             </div>
         {% else %}
-            <p class="empty-state">No expenses yet. <a href="{{ url_for('add_expense') }}">Add one now →</a></p>
+            <p class="empty-state">No expenses found. {% if search or filter_category or start_date %}<a href="{{ url_for('view_expenses') }}">Clear filters</a> or {% endif %}<a href="{{ url_for('add_expense') }}">Add one now →</a></p>
         {% endif %}
     </div>
 </div>
@@ -107,6 +203,156 @@
 </script>
 
 <style>
+.filter-card {
+    background: var(--bg-card);
+    border-radius: 16px;
+    padding: 25px;
+    margin-bottom: 25px;
+    border: 1px solid var(--border-color);
+}
+
+.search-bar {
+    position: relative;
+    margin-bottom: 20px;
+}
+
+.search-icon {
+    position: absolute;
+    left: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 1.2rem;
+}
+
+.search-input {
+    width: 100%;
+    padding: 14px 14px 14px 48px;
+    border: 2px solid var(--border-color);
+    border-radius: 12px;
+    font-size: 1rem;
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+}
+
+.search-input:focus {
+    outline: none;
+    border-color: #667eea;
+}
+
+.filter-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.filter-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.filter-group label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+
+.filter-select,
+.filter-input {
+    padding: 10px 12px;
+    border: 2px solid var(--border-color);
+    border-radius: 10px;
+    font-size: 0.9rem;
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+}
+
+.filter-select:focus,
+.filter-input:focus {
+    outline: none;
+    border-color: #667eea;
+}
+
+.filter-actions {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.filter-btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 10px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.9rem;
+}
+
+.apply-btn {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+}
+
+.clear-btn {
+    background: #f3f4f6;
+    color: #374151;
+}
+
+.export-btn {
+    background: #10b981;
+    color: white;
+}
+
+.filter-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.export-btns {
+    margin-left: auto;
+    display: flex;
+    gap: 10px;
+}
+
+.tags-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+
+.tag {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+.notes-text {
+    display: block;
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+    margin-top: 4px;
+}
+
+.receipt-link {
+    color: #667eea;
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.receipt-link:hover {
+    text-decoration: underline;
+}
+
 .delete-btn {
     background: linear-gradient(135deg, #ff6b6b 0%, #ee5a5a 100%);
     color: white;
@@ -131,6 +377,18 @@
 .table-row .table-cell:last-child {
     text-align: center;
     width: 80px;
+}
+
+@media (max-width: 768px) {
+    .filter-row {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .export-btns {
+        margin-left: 0;
+        width: 100%;
+        margin-top: 10px;
+    }
 }
 </style>
 {% endblock %}

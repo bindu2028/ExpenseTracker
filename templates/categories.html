@@ -1,0 +1,205 @@
+{% extends "base.html" %}
+
+{% block title %}Categories - Expense Tracker{% endblock %}
+
+{% block content %}
+<div class="page-container">
+    <div class="page-header">
+        <h1>📁 Custom Categories</h1>
+        <p>Create your own expense categories</p>
+    </div>
+    
+    <!-- Add Category Form -->
+    <div class="card" style="margin-bottom: 30px;">
+        <h3 style="margin-bottom: 20px;">Add New Category</h3>
+        <form action="{{ url_for('add_category') }}" method="POST" class="category-form">
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">Category Name</label>
+                    <input type="text" name="name" class="form-input" placeholder="e.g., Groceries, Subscriptions" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Icon (Emoji)</label>
+                    <input type="text" name="icon" class="form-input" placeholder="🛒" maxlength="4" value="📁">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Color</label>
+                    <input type="color" name="color" class="form-input color-input" value="#667eea">
+                </div>
+                <div class="form-group" style="align-self: flex-end;">
+                    <button type="submit" class="btn btn-primary">Add Category</button>
+                </div>
+            </div>
+        </form>
+    </div>
+    
+    <!-- Categories Grid -->
+    <div class="categories-grid">
+        {% for cat in categories %}
+        <div class="category-card" style="border-left-color: {{ cat.color }}">
+            <div class="category-icon" style="background: {{ cat.color }}">{{ cat.icon }}</div>
+            <div class="category-info">
+                <h3>{{ cat.name }}</h3>
+                <span class="category-type">
+                    {% if cat.is_default %}Default{% else %}Custom{% endif %}
+                </span>
+            </div>
+            {% if not cat.is_default %}
+            <button class="btn-icon delete-btn" onclick="deleteCategory({{ cat.id }})" title="Delete Category">🗑️</button>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<style>
+    .page-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 30px;
+    }
+    
+    .page-header {
+        margin-bottom: 30px;
+    }
+    
+    .page-header h1 {
+        font-size: 2rem;
+        margin-bottom: 8px;
+    }
+    
+    .card {
+        background: var(--bg-card);
+        border-radius: 16px;
+        padding: 25px;
+        border: 1px solid var(--border-color);
+    }
+    
+    .form-row {
+        display: flex;
+        gap: 20px;
+        flex-wrap: wrap;
+        align-items: flex-end;
+    }
+    
+    .form-group {
+        flex: 1;
+        min-width: 150px;
+    }
+    
+    .form-label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 600;
+        font-size: 0.9rem;
+    }
+    
+    .form-input {
+        width: 100%;
+        padding: 12px 16px;
+        border: 2px solid var(--border-color);
+        border-radius: 10px;
+        font-size: 1rem;
+        background: var(--bg-secondary);
+    }
+    
+    .color-input {
+        height: 48px;
+        padding: 5px;
+        cursor: pointer;
+    }
+    
+    .btn {
+        padding: 12px 24px;
+        border: none;
+        border-radius: 10px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-primary {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: white;
+    }
+    
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+    }
+    
+    .categories-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 20px;
+    }
+    
+    .category-card {
+        background: var(--bg-card);
+        border-radius: 16px;
+        padding: 20px;
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        border: 1px solid var(--border-color);
+        border-left: 4px solid;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    
+    .category-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+    }
+    
+    .category-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        color: white;
+    }
+    
+    .category-info {
+        flex: 1;
+    }
+    
+    .category-info h3 {
+        margin-bottom: 5px;
+        font-size: 1.1rem;
+    }
+    
+    .category-type {
+        font-size: 0.8rem;
+        color: var(--text-secondary);
+    }
+    
+    .btn-icon {
+        background: transparent;
+        border: none;
+        font-size: 1.2rem;
+        cursor: pointer;
+        opacity: 0.6;
+        transition: opacity 0.2s;
+    }
+    
+    .btn-icon:hover {
+        opacity: 1;
+    }
+</style>
+
+<script>
+    async function deleteCategory(id) {
+        if (confirm('Are you sure you want to delete this category?')) {
+            try {
+                await fetch(`/delete-category/${id}`, { method: 'POST' });
+                location.reload();
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
+    }
+</script>
+{% endblock %}

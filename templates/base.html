@@ -1,10 +1,117 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="{{ session.get('theme', 'light') }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Expense Tracker{% endblock %}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        /* Dark Mode Variables */
+        :root {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f8f9fa;
+            --bg-card: #ffffff;
+            --text-primary: #1a1a2e;
+            --text-secondary: #6b7280;
+            --border-color: #e5e7eb;
+            --nav-bg: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        [data-theme="dark"] {
+            --bg-primary: #1a1a2e;
+            --bg-secondary: #16213e;
+            --bg-card: #1e2746;
+            --text-primary: #ffffff;
+            --text-secondary: #9ca3af;
+            --border-color: #374151;
+            --nav-bg: linear-gradient(135deg, #1e2746 0%, #2d3a5c 100%);
+        }
+        
+        body {
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            transition: background 0.3s ease, color 0.3s ease;
+        }
+        
+        [data-theme="dark"] .main-content {
+            background: var(--bg-primary);
+        }
+        
+        [data-theme="dark"] .metric-card,
+        [data-theme="dark"] .card,
+        [data-theme="dark"] .expense-card,
+        [data-theme="dark"] .form-container,
+        [data-theme="dark"] .table-container {
+            background: var(--bg-card);
+            border-color: var(--border-color);
+        }
+        
+        [data-theme="dark"] .form-input,
+        [data-theme="dark"] .form-select {
+            background: var(--bg-secondary);
+            border-color: var(--border-color);
+            color: var(--text-primary);
+        }
+        
+        [data-theme="dark"] .text-muted {
+            color: var(--text-secondary);
+        }
+        
+        /* Theme Toggle Button */
+        .theme-toggle {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            transition: all 0.3s ease;
+            margin-right: 15px;
+        }
+        
+        .theme-toggle:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: rotate(20deg);
+        }
+        
+        /* Dropdown Menu */
+        .nav-dropdown {
+            position: relative;
+        }
+        
+        .nav-dropdown-content {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            background: var(--bg-card);
+            min-width: 180px;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            z-index: 1000;
+            overflow: hidden;
+        }
+        
+        .nav-dropdown:hover .nav-dropdown-content {
+            display: block;
+        }
+        
+        .nav-dropdown-content a {
+            display: block;
+            padding: 12px 20px;
+            color: var(--text-primary);
+            text-decoration: none;
+            transition: background 0.2s ease;
+        }
+        
+        .nav-dropdown-content a:hover {
+            background: rgba(102, 126, 234, 0.1);
+        }
+    </style>
     {% block extra_css %}{% endblock %}
 </head>
 <body>
@@ -17,9 +124,28 @@
             </div>
             <ul class="navbar-menu">
                 <li><a href="{{ url_for('dashboard') }}" class="nav-link">Dashboard</a></li>
-                <li><a href="{{ url_for('add_expense') }}" class="nav-link">Add Expense</a></li>
-                <li><a href="{{ url_for('view_expenses') }}" class="nav-link">View Expenses</a></li>
-                <li><a href="{{ url_for('analysis') }}" class="nav-link">Analysis</a></li>
+                <li class="nav-dropdown">
+                    <a href="#" class="nav-link">Transactions ▾</a>
+                    <div class="nav-dropdown-content">
+                        <a href="{{ url_for('add_expense') }}">➕ Add Expense</a>
+                        <a href="{{ url_for('view_expenses') }}">📋 View Expenses</a>
+                        <a href="{{ url_for('income') }}">💵 Income</a>
+                    </div>
+                </li>
+                <li class="nav-dropdown">
+                    <a href="#" class="nav-link">Planning ▾</a>
+                    <div class="nav-dropdown-content">
+                        <a href="{{ url_for('budgets') }}">🎯 Budget Goals</a>
+                        <a href="{{ url_for('categories') }}">📁 Categories</a>
+                        <a href="{{ url_for('analysis') }}">📊 Analysis</a>
+                    </div>
+                </li>
+                <li>
+                    <button class="theme-toggle" onclick="toggleTheme()" title="Toggle Dark/Light Mode">
+                        {{ '🌙' if session.get('theme', 'light') == 'light' else '☀️' }}
+                    </button>
+                </li>
+                <li><a href="{{ url_for('settings') }}" class="nav-link">⚙️</a></li>
                 <li><a href="{{ url_for('logout') }}" class="nav-link logout-link">Logout</a></li>
             </ul>
         </div>
@@ -34,6 +160,20 @@
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <script>
+        async function toggleTheme() {
+            try {
+                const response = await fetch('/toggle-theme', { method: 'POST' });
+                const data = await response.json();
+                if (data.success) {
+                    document.documentElement.setAttribute('data-theme', data.theme);
+                    document.querySelector('.theme-toggle').textContent = data.theme === 'light' ? '🌙' : '☀️';
+                }
+            } catch (error) {
+                console.error('Error toggling theme:', error);
+            }
+        }
+    </script>
     {% block extra_js %}{% endblock %}
 </body>
 </html>
